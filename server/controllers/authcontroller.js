@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
 
 /* Configuration Multer for File Upload */
 const storage = multer.diskStorage({
@@ -63,4 +64,35 @@ const registerUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, upload };
+const loginUser = async (req, res) => {
+  try {
+    /* Take all information from the form */
+    const { email, password } = req.body;
+    console.log(req.body);
+    /* Check if user exists */
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      return res.status(409).json({ message: "User doesnt exist!" });
+    }
+    /* Check if password is correct */
+    const isMatch = await bcrypt.compare(password, existingUser.password);
+    if (!isMatch) {
+      return res.status(409).json({ message: "Invalid password!" });
+    }
+    /* Generate jwt token */
+    const token = jwt.sign(
+      { id: existingUser._id },
+      process.env.JWT_SECRET_KEY
+    );
+    delete existingUser.password;
+    /* Send a successful message */
+    res
+      .status(200)
+      .json({ message: "Login successful!", token, user: existingUser });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Login failed!", error: err.message });
+  }
+};
+
+module.exports = { registerUser, loginUser, upload };

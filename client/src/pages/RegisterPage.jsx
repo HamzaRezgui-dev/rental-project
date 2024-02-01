@@ -37,7 +37,7 @@ const RegisterPage = () => {
         registerForm.append(key, formData[key]);
       }
       const response = await axios.post(
-        "http://localhost:3001/auth/register",
+        `${process.env.REACT_APP_BACKEND_ENDPOINT}/auth/register`,
         registerForm
       );
 
